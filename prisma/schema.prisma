@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String?           @unique
+  password         String?
+  name             String
+  phone            String?           @unique
+  emailVerified    Boolean           @default(false)
+  phoneVerified    Boolean           @default(false)
+  avatar           String?
+  orders           Order[]
+  cartItems        CartItem[]
+  couponUsage      CouponUsage[]
+  offerUsage       OfferUsage[]
+  wishlistItems    WishlistItem[]
+  notifications    Notification[]
+  addresses        Address[]
+  otpVerifications OtpVerification[]
+  createdAt        DateTime          @default(now())
+  Review           Review[]
+
+  expoPushToken String?
+  deviceInfo    Json?
+
+  @@index([expoPushToken, id])
+}
+
+model OtpVerification {
+  id            String   @id @default(cuid())
+  phone         String
+  otp           String
+  verficationId String?
+  expiresAt     DateTime
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+  User          User?    @relation(fields: [userId], references: [id])
+  userId        String?
+
+  @@index([otp])
+  @@index([expiresAt])
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  landmark     String?
+  isDefault    Boolean  @default(false)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([pincode])
+}
+
+model Product {
+  id                  String         @id @default(cuid())
+  name                String
+  description         String         @db.Text
+  price               Float
+  images              Images[]
+  netWeight           String // e.g. "500ml", "1kg"
+  ingredients         String?
+  nutritionalInfo     String?
+  storageInstructions String?
+  shelfLife           String?
+  isActive            Boolean        @default(true)
+  isFeatured          Boolean        @default(false)
+  rating              Float          @default(0)
+  reviewCount         Int            @default(0)
+  createdAt           DateTime       @default(now())
+  categoryId          String
+  category            Category       @relation(fields: [categoryId], references: [id])
+  orderItems          OrderItem[]
+  cartItems           CartItem[]
+  wishlistItems       WishlistItem[]
+  reviews             Review[]
+
+  @@index([categoryId])
+}
+
+model Images {
+  id        String   @id @default(cuid())
+  url       String
+  Product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  image    String?
+  products Product[]
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  rating     Int // 1-5
+  title      String?
+  comment    String?
+  images     Json? // Array of image URLs
+  isVerified Boolean  @default(false) // Verified purchase
+  user       User     @relation(fields: [userId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId, rating])
+}
+
+model Notification {
+  id             String    @id @default(cuid())
+  userId         String? // null for broadcast notifications
+  title          String
+  message        String
+  isRead         Boolean   @default(false)
+  data           Json? // Additional data for deep linking
+  // Expo push notification fields
+  expoPushStatus String? // "sent", "failed", "delivered"
+  expoPushId     String? // Expo push notification ID
+  scheduledFor   DateTime? // For scheduled notifications
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+
+  @@index([userId, isRead])
+  @@index([scheduledFor])
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // Prevent duplicate cart items for same user-product
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id              String       @id @default(cuid())
+  orderNumber     String       @unique
+  userId          String
+  items           OrderItem[]
+  subtotal        Float
+  deliveryCharges Float        @default(0)
+  tax             Float        @default(0)
+  discount        Float        @default(0)
+  total           Float
+  couponId        String? // Track which coupon was used
+  offerId         String? // Track which offer was used
+  user            User         @relation(fields: [userId], references: [id])
+  coupon          Coupon?      @relation(fields: [couponId], references: [id])
+  offer           Offer?       @relation(fields: [offerId], references: [id])
+  couponUsage     CouponUsage? // One-to-one relation for this order's coupon usage
+  offerUsage      OfferUsage? // One-to-one relation for this order's offer usage
+  createdAt       DateTime     @default(now())
+  addressId       String
+
+  paymentGateway  String? // "phonepe" etc.
+  gatewayOrderId  String? // PhonePe transaction ID
+  gatewayResponse Json? // Store gateway response for debugging
+
+  address Address @relation(fields: [addressId], references: [id])
+
+  deliveryPartnerId Int?
+  deliveryPartner   DeliveryPartner? @relation("DeliveryAssignments", fields: [deliveryPartnerId], references: [id])
+
+  status        OrderStatus    @default(PENDING)
+  paymentStatus PaymentStatus  @default(PENDING)
+  paymentMethod PaymentMethod?
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  USER_NOT_REACHABLE
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
+  UPI
+  WALLET
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float // Store the price at time of order
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Coupon {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  description   String?
+  discountType  String // "percentage" or "flat"
+  discountValue Float // e.g. 10 for 10% or ₹10
+  validFrom     DateTime
+  validTill     DateTime
+  minAmount     Float?
+  maxDiscount   Float? // For percentage type coupons
+  usageLimit    Int? // Global usage limit
+  userLimit     Int? // Per-user usage limit
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  orders        Order[] // Orders that used this coupon
+  couponUsage   CouponUsage[] // Track individual usage instances
+
+  @@index([code])
+  @@index([validFrom, validTill])
+}
+
+model Offer {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  discountType  String // "flat" | "percentage"
+  discountValue Float // ₹ or %
+  minCartAmount Float // e.g. 500
+  maxDiscount   Float? // applicable if discountType is "percentage"
+  validFrom     DateTime
+  validTill     DateTime
+  usageLimit    Int? // Global usage limit
+  userLimit     Int? // Per-user usage limit
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  orders        Order[] // Orders that used this offer
+  offerUsage    OfferUsage[] // Track individual usage instances
+
+  @@index([validFrom, validTill])
+}
+
+// Track individual coupon usage instances
+model CouponUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  couponId  String
+  orderId   String   @unique // Each order can only have one coupon usage
+  discount  Float // Actual discount applied
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@index([userId, couponId])
+  @@index([couponId])
+}
+
+// Track individual offer usage instances
+model OfferUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  offerId   String
+  orderId   String   @unique // Each order can only have one offer usage
+  discount  Float // Actual discount applied
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@index([userId, offerId])
+  @@index([offerId])
+}
+
+// Admin/Staff management
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String?
+  description String?
+  imageUrl    String
+  redirectUrl String? // Deep link or external URL
+  priority    Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([priority])
+}
+
+model Shipping {
+  id        String   @id @default(cuid())
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([price])
+}
+
+model DeliveryPartner {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  orders    Order[]  @relation("DeliveryAssignments")
+  createdAt DateTime @default(now())
+}
+
+model afterTime {
+  id   String @id @default(cuid())
+  time String
+  text String @db.Text
+}

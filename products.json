@@ -1,0 +1,99 @@
+[
+    {
+      "name": "Mitha Dahi",
+      "description": "Sweetened curd, ready to eat",
+      "price": 25,
+      "netWeight": "200 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Meetha%20Dahi.jpg?updatedAt=1755702314621"
+    },
+    {
+      "name": "Curd 1 kg",
+      "description": "Fresh thick curd",
+      "price": 72,
+      "netWeight": "1 kg",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Dahi%20Pouch.jpg?updatedAt=1755702314580"
+    },
+    {
+      "name": "Curd 40 gm pouch",
+      "description": "Small pouch curd",
+      "price": 30,
+      "netWeight": "40 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Dahi.jpg?updatedAt=1755702314713"
+    },
+    {
+      "name": "Curd 400 gm cup",
+      "description": "Cup packed curd",
+      "price": 70,
+      "netWeight": "400 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Dahi%20Cup.jpg?updatedAt=1755702314772"
+    },
+    {
+      "name": "Lassi",
+      "description": "Refreshing sweet lassi",
+      "price": 30,
+      "netWeight": "200 ml",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Lassi.jpg?updatedAt=1755702319397"
+    },
+    {
+      "name": "Ghee 500 ml",
+      "description": "Pure desi ghee 500 ml pack",
+      "price": 750,
+      "netWeight": "500 ml",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Ghee.jpg?updatedAt=1755702315485"
+    },
+    {
+      "name": "Ghee 1000 ml",
+      "description": "Pure desi ghee 1 liter pack",
+      "price": 1500,
+      "netWeight": "1000 ml",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Ghee.jpg?updatedAt=1755702315485"
+    },
+    {
+      "name": "Ghee 200 ml",
+      "description": "Pure desi ghee 200 ml pack",
+      "price": 350,
+      "netWeight": "200 ml",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Ghee.jpg?updatedAt=1755702315485"
+    },
+    {
+      "name": "Peda - 140 gm",
+      "description": "Soft and sweet peda",
+      "price": 100,
+      "netWeight": "140 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Peda.jpg?updatedAt=1755702315364"
+    },
+    {
+      "name": "Chenapdo",
+      "description": "Traditional sweet Chenapdo",
+      "price": 100,
+      "netWeight": "150 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Cheena%20Poda.jpg?updatedAt=1755702315247"
+    },
+    {
+      "name": "Milk 1 ltr",
+      "description": "Fresh cow milk 1 liter",
+      "price": 70,
+      "netWeight": "1 liter",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Milk.jpg?updatedAt=1755702314506"
+    },
+    {
+      "name": "Paneer - 200 gm",
+      "description": "Fresh paneer 200 gm pack",
+      "price": 80,
+      "netWeight": "200 gm",
+      "categoryId": "cmelutp9k0000ujuov35fvcyw",
+      "imageUrl": "https://ik.imagekit.io/blogapp777/jaharani/Paneer.jpg?updatedAt=1755702314934"
+    }
+  ]
+  
