@@ -1,9 +1,9 @@
 const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('pg-sdk-node');
 
-const clientId = 'TEST-M2300Z2GGOB1F_25090';
-const clientSecret = 'MDhjZjYxNzAtMjM2OS00NDk0LWI0YmItZTNkNjRkYzZkYmE1';
+const clientId = 'SU2509302010389222215384';
+const clientSecret = 'a6563f6f-14e0-4bf4-88b6-5cfd44220f1f';
 const clientVersion = 1;
-const env = Env.SANDBOX;
+const env = Env.PRODUCTION;
 const phonepeClient = StandardCheckoutClient.getInstance(
     clientId,
     clientSecret,
@@ -19,7 +19,6 @@ async function phonepeRoutes(fastify, options) {
     // Initiate Payment
     // ------------------------
     fastify.post('/phonepe/initiate', async (request, reply) => {
-        console.log('>>> [INITIATE] env:', process.env.ENVIRONMENT);
 
         try {
             const { userId, addressId, amount, items, paymentMethod, coupon } =
