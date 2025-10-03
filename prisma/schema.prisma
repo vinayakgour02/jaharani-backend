@@ -167,7 +167,7 @@ model WishlistItem {
 }
 
 model Order {
-  id              String       @id @default(cuid())
+  id              Int          @id @default(autoincrement())
   orderNumber     String       @unique
   userId          String
   items           OrderItem[]
@@ -227,7 +227,7 @@ enum PaymentMethod {
 
 model OrderItem {
   id        String  @id @default(cuid())
-  orderId   String
+  orderId   Int
   productId String
   quantity  Int
   price     Float // Store the price at time of order
@@ -281,7 +281,7 @@ model CouponUsage {
   id        String   @id @default(cuid())
   userId    String
   couponId  String
-  orderId   String   @unique // Each order can only have one coupon usage
+  orderId   Int   @unique // Each order can only have one coupon usage
   discount  Float // Actual discount applied
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
@@ -297,7 +297,7 @@ model OfferUsage {
   id        String   @id @default(cuid())
   userId    String
   offerId   String
-  orderId   String   @unique // Each order can only have one offer usage
+  orderId   Int   @unique // Each order can only have one offer usage
   discount  Float // Actual discount applied
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
