@@ -143,38 +143,62 @@ async function phonepeRoutes(fastify, options) {
         console.log('>>> [STATUS] endpoint hit:', orderId, request.query);
 
         try {
-            const phonepeResponse = await phonepeClient.getOrderStatus(orderId);
+            // Find order by id or orderNumber
+            const order = await fastify.prisma.order.findFirst({
+                where: {
+                    OR: [
+                        { id: orderId },
+                        { orderNumber: orderId }
+                    ]
+                }
+            });
+
+            if (!order) {
+                return reply.status(404).send({ success: false, message: 'Order not found' });
+            }
+
+            // Call PhonePe API using gatewayOrderId if exists, otherwise fallback to orderNumber
+            const transactionId = order.id || order.orderNumber;
+            const phonepeResponse = await phonepeClient.getOrderStatus(transactionId);
             console.log('>>> [STATUS] PhonePe response:', phonepeResponse);
 
             if (phonepeResponse?.state === 'COMPLETED') {
                 await fastify.prisma.order.update({
-                    where: { id: orderId },
-                    data: { status: 'CONFIRMED', paymentStatus: 'PAID' },
+                    where: { id: order.id },
+                    data: { status: 'CONFIRMED', paymentStatus: 'PAID', gatewayResponse: phonepeResponse },
                 });
                 console.log('>>> [STATUS] Payment SUCCESS for order:', orderId);
-                return reply.send({ success: true, orderId: orderId });
+                return reply.send({ success: true, orderId: order.id });
             } else {
                 await fastify.prisma.order.update({
-                    where: { id: orderId },
-                    data: { status: 'CANCELLED', paymentStatus: 'FAILED' },
+                    where: { id: order.id },
+                    data: { status: 'CANCELLED', paymentStatus: 'FAILED', gatewayResponse: phonepeResponse },
                 });
                 console.log('>>> [STATUS] Payment FAILED for order:', orderId);
-                return reply.send({ success: false, orderId: orderId, message: 'Payment failed or cancelled' });
+                return reply.send({ success: false, orderId: order.id, message: 'Payment failed or cancelled' });
             }
         } catch (error) {
             console.error('[PhonePe] Error checking status for order:', error);
-            // Update order status to failed in case of error
+
+            // Try to mark order as failed if possible
             try {
-                await fastify.prisma.order.update({
-                    where: { id: orderId },
-                    data: { status: 'CANCELLED', paymentStatus: 'FAILED' },
+                const order = await fastify.prisma.order.findFirst({
+                    where: { OR: [{ id: orderId }, { orderNumber: orderId }] },
                 });
+                if (order) {
+                    await fastify.prisma.order.update({
+                        where: { id: order.id },
+                        data: { status: 'CANCELLED', paymentStatus: 'FAILED' },
+                    });
+                }
             } catch (updateError) {
                 console.error('[PhonePe] Error updating order status:', updateError);
             }
-            return reply.send({ success: false, orderId: orderId, message: 'Error verifying payment status' });
+
+            return reply.send({ success: false, orderId, message: 'Error verifying payment status' });
         }
     });
+
 }
 
 module.exports = phonepeRoutes;
