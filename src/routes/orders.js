@@ -8,6 +8,7 @@ const orderQuerySchema = {
       type: 'string', 
       enum: ['PENDING', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] 
     },
+    
     paymentStatus: { 
       type: 'string', 
       enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED'] 
@@ -149,44 +150,36 @@ async function orderRoutes(fastify, options) {
 
   // GET /orders - Get all orders with filtering, pagination, and search
   fastify.get('/', {
-    schema: {
-      querystring: orderQuerySchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            success: { type: 'boolean' },
-            data: {
-              type: 'object',
-              properties: {
-                orders: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string' },
-                      orderNumber: { type: 'string' },
-                      userId: { type: 'string' },
-                      subtotal: { type: 'number' },
-                      deliveryCharges: { type: 'number' },
-                      tax: { type: 'number' },
-                      discount: { type: 'number' },
-                      total: { type: 'number' },
-                      status: { type: 'string' },
-                      paymentStatus: { type: 'string' },
-                      paymentMethod: { type: ['string', 'null'] },
-                      paymentGateway: { type: ['string', 'null'] },
-                      createdAt: { type: 'string', format: 'date-time' },
-                      user: {
-                        type: 'object',
-                        properties: {
-                          id: { type: 'string' },
-                          name: { type: 'string' },
-                          email: { type: ['string', 'null'] },
-                          phone: { type: ['string', 'null'] }
-                        }
-                      },
-                      address: {
+  schema: {
+    querystring: orderQuerySchema,
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean' },
+          data: {
+            type: 'object',
+            properties: {
+              orders: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    orderNumber: { type: 'string' },
+                    userId: { type: 'string' },
+                    subtotal: { type: 'number' },
+                    deliveryCharges: { type: 'number' },
+                    tax: { type: 'number' },
+                    discount: { type: 'number' },
+                    total: { type: 'number' },
+                    status: { type: 'string' },
+                    paymentStatus: { type: 'string' },
+                    paymentMethod: { type: ['string', 'null'] },
+                    paymentGateway: { type: ['string', 'null'] },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    user: { type: 'object' },
+                     address: {
                         type: 'object',
                         properties: {
                           id: { type: 'string' },
@@ -198,214 +191,129 @@ async function orderRoutes(fastify, options) {
                           pincode: { type: 'string' }
                         }
                       },
-                      items: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'string' },
-                            quantity: { type: 'integer' },
-                            price: { type: 'number' },
-                            product: {
-                              type: 'object',
-                              properties: {
-                                id: { type: 'string' },
-                                name: { type: 'string' },
-                                images: {
-                                  type: 'array',
-                                  items: {
-                                    type: 'object',
-                                    properties: {
-                                      url: { type: 'string' }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      },
-                      coupon: {
-                        type: ['object', 'null'],
-                        properties: {
-                          id: { type: 'string' },
-                          code: { type: 'string' },
-                          discountType: { type: 'string' },
-                          discountValue: { type: 'number' }
-                        }
-                      },
-                      offer: {
-                        type: ['object', 'null'],
-                        properties: {
-                          id: { type: 'string' },
-                          title: { type: 'string' },
-                          discountType: { type: 'string' },
-                          discountValue: { type: 'number' }
-                        }
+                    items: { type: 'array' },
+                    coupon: { type: ['object', 'null'] },
+                    offer: { type: ['object', 'null'] },
+                    deliveryPartner: {
+                      type: ['object', 'null'],
+                      properties: {
+                        id: { type: 'integer' },
+                        name: { type: 'string' },
+                        email: { type: ['string', 'null'] },
+                        createdAt: { type: 'string', format: 'date-time' }
                       }
                     }
                   }
-                },
-                pagination: {
-                  type: 'object',
-                  properties: {
-                    page: { type: 'integer' },
-                    limit: { type: 'integer' },
-                    total: { type: 'integer' },
-                    totalPages: { type: 'integer' }
-                  }
                 }
-              }
+              },
+              pagination: { type: 'object' }
             }
           }
         }
       }
     }
-  }, async (request, reply) => {
-    try {
-      const {
-        page = 1,
-        limit = 10,
-        status,
-        paymentStatus,
-        paymentMethod,
-        search,
-        sortBy = 'createdAt',
-        sortOrder = 'desc',
-        dateFilter,
-        startDate,
-        endDate,
-        userId
-      } = request.query;
+  }
+}, async (request, reply) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      paymentStatus,
+      paymentMethod,
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      dateFilter,
+      startDate,
+      endDate,
+      userId
+    } = request.query;
 
-      // Build where clause
-      const where = {};
+    const where = {};
 
-      // Status filter
-      if (status) {
-        where.status = status;
-      }
+    if (status) where.status = status;
+    if (paymentStatus) where.paymentStatus = paymentStatus;
+    if (paymentMethod) where.paymentMethod = paymentMethod;
+    if (userId) where.userId = userId;
 
-      // Payment status filter
-      if (paymentStatus) {
-        where.paymentStatus = paymentStatus;
-      }
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { user: { is: { name: { contains: search, mode: 'insensitive' } } } },
+        { user: { is: { email: { contains: search, mode: 'insensitive' } } } },
+        { user: { is: { phone: { contains: search, mode: 'insensitive' } } } },
+        { address: { is: { fullName: { contains: search, mode: 'insensitive' } } } },
+        { address: { is: { phone: { contains: search, mode: 'insensitive' } } } }
+      ];
+    }
 
-      // Payment method filter
-      if (paymentMethod) {
-        where.paymentMethod = paymentMethod;
-      }
+    Object.assign(where, buildDateFilter(dateFilter, startDate, endDate));
 
-      // User filter
-      if (userId) {
-        where.userId = userId;
-      }
+    const skip = (page - 1) * limit;
 
-      // Search filter
-      if (search) {
-        where.OR = [
-          { orderNumber: { contains: search, mode: 'insensitive' } },
-          { user: { name: { contains: search, mode: 'insensitive' } } },
-          { user: { email: { contains: search, mode: 'insensitive' } } },
-          { user: { phone: { contains: search, mode: 'insensitive' } } },
-          { address: { fullName: { contains: search, mode: 'insensitive' } } },
-          { address: { phone: { contains: search, mode: 'insensitive' } } }
-        ];
-      }
-
-      // Date filter
-      const dateFilterClause = buildDateFilter(dateFilter, startDate, endDate);
-      Object.assign(where, dateFilterClause);
-
-      // Calculate pagination
-      const skip = (page - 1) * limit;
-
-      // Get orders with relations
-      const orders = await fastify.prisma.order.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
-            }
-          },
-          address: {
-            select: {
-              id: true,
-              fullName: true,
-              phone: true,
-              addressLine1: true,
-              city: true,
-              state: true,
-              pincode: true
-            }
-          },
-          items: {
-            include: {
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  images: {
-                    select: {
-                      url: true
-                    }
-                  }
-                }
+    const orders = await fastify.prisma.order.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        address: {
+          select: {
+            id: true,
+            fullName: true,
+            phone: true,
+            addressLine1: true,
+            city: true,
+            state: true,
+            pincode: true
+          }
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: { select: { url: true } }
               }
             }
-          },
-          coupon: {
-            select: {
-              id: true,
-              code: true,
-              discountType: true,
-              discountValue: true
-            }
-          },
-          offer: {
-            select: {
-              id: true,
-              title: true,
-              discountType: true,
-              discountValue: true
-            }
           }
         },
-        orderBy: {
-          [sortBy]: sortOrder
-        },
-        skip,
-        take: limit
-      });
-
-      // Get total count for pagination
-      const total = await fastify.prisma.order.count({ where });
-      const totalPages = Math.ceil(total / limit);
-
-      return reply.send({
-        success: true,
-        data: {
-          orders,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages
+        coupon: { select: { id: true, code: true, discountType: true, discountValue: true } },
+        offer: { select: { id: true, title: true, discountType: true, discountValue: true } },
+        deliveryPartner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true
           }
         }
-      });
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.status(500).send({
-        success: false,
-        error: 'Failed to fetch orders'
-      });
-    }
-  });
+      },
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit
+    });
+
+    const total = await fastify.prisma.order.count({ where });
+
+    return reply.send({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    fastify.log.error(error);
+    return reply.status(500).send({ success: false, error: 'Failed to fetch orders' });
+  }
+});
+
 
   // GET /orders/:id - Get order by ID
   fastify.get('/:id', {
@@ -433,6 +341,7 @@ async function orderRoutes(fastify, options) {
               phone: true
             }
           },
+               deliveryPartner: true,
           address: {
             select: {
               id: true,

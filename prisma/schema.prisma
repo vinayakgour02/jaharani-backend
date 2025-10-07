@@ -167,37 +167,33 @@ model WishlistItem {
 }
 
 model Order {
-  id              String          @id @default(cuid())
-  orderNumber     String       @unique
-  userId          String
-  items           OrderItem[]
-  subtotal        Float
-  deliveryCharges Float        @default(0)
-  tax             Float        @default(0)
-  discount        Float        @default(0)
-  total           Float
-  couponId        String? // Track which coupon was used
-  offerId         String? // Track which offer was used
-  user            User         @relation(fields: [userId], references: [id])
-  coupon          Coupon?      @relation(fields: [couponId], references: [id])
-  offer           Offer?       @relation(fields: [offerId], references: [id])
-  couponUsage     CouponUsage? // One-to-one relation for this order's coupon usage
-  offerUsage      OfferUsage? // One-to-one relation for this order's offer usage
-  createdAt       DateTime     @default(now())
-  addressId       String
-
-  paymentGateway  String? // "phonepe" etc.
-  gatewayOrderId  String? // PhonePe transaction ID
-  gatewayResponse Json? // Store gateway response for debugging
-
-  address Address @relation(fields: [addressId], references: [id])
-
-  deliveryPartnerId Int?
+  id                String          @id @default(cuid())
+  orderNumber       String          @unique
+  userId            String
+  items             OrderItem[]
+  subtotal          Float
+  deliveryCharges   Float           @default(0)
+  tax               Float           @default(0)
+  discount          Float           @default(0)
+  total             Float
+  couponId          String?         
+  offerId           String?         
+  user              User            @relation(fields: [userId], references: [id])
+  coupon            Coupon?         @relation(fields: [couponId], references: [id])
+  offer             Offer?          @relation(fields: [offerId], references: [id])
+  couponUsage       CouponUsage?    
+  offerUsage        OfferUsage?     
+  createdAt         DateTime        @default(now())
+  addressId         String
+  address           Address         @relation(fields: [addressId], references: [id])
+  deliveryPartnerId Int?            
   deliveryPartner   DeliveryPartner? @relation("DeliveryAssignments", fields: [deliveryPartnerId], references: [id])
-
-  status        OrderStatus    @default(CANCELLED)
-  paymentStatus PaymentStatus  @default(FAILED)
-  paymentMethod PaymentMethod?
+  status            OrderStatus      @default(CANCELLED)
+  paymentStatus     PaymentStatus    @default(FAILED)
+  paymentMethod     PaymentMethod?
+  paymentGateway    String?
+  gatewayOrderId    String?
+  gatewayResponse   Json?
 }
 
 enum OrderStatus {
@@ -348,6 +344,7 @@ model DeliveryPartner {
   orders    Order[]  @relation("DeliveryAssignments")
   createdAt DateTime @default(now())
 }
+
 
 model afterTime {
   id   String @id @default(cuid())

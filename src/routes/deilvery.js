@@ -90,14 +90,14 @@ async function DeliveryRoutes(fastify, routes) {
     try {
       const { id } = request.params;
       const { name, email, password } = request.body;
-  
+
       if (!id) {
         return reply.status(400).send({
           success: false,
           error: "Delivery partner ID is required",
         });
       }
-  
+
       // Build update data dynamically
       const updateData = {};
       if (name) updateData.name = name;
@@ -112,7 +112,7 @@ async function DeliveryRoutes(fastify, routes) {
         const saltRounds = 12;
         updateData.password = await bcrypt.hash(password, saltRounds);
       }
-  
+
       const updatedPartner = await fastify.prisma.deliveryPartner.update({
         where: { id: Number(id) }, // ID is Int
         data: updateData,
@@ -123,7 +123,7 @@ async function DeliveryRoutes(fastify, routes) {
           createdAt: true,
         },
       });
-  
+
       return reply.send({
         success: true,
         data: updatedPartner,
@@ -131,14 +131,14 @@ async function DeliveryRoutes(fastify, routes) {
       });
     } catch (error) {
       fastify.log.error(error);
-  
+
       if (error.code === "P2002" && error.meta?.target?.includes("email")) {
         return reply.status(409).send({
           success: false,
           error: "Partner with this email already exists",
         });
       }
-  
+
       return reply.status(500).send({
         success: false,
         error: "Failed to update partner",
@@ -149,14 +149,14 @@ async function DeliveryRoutes(fastify, routes) {
   fastify.delete("/delivery-partners/:id", async (request, reply) => {
     try {
       const { id } = request.params;
-  
+
       if (!id) {
         return reply.status(400).send({
           success: false,
           error: "Delivery partner ID is required",
         });
       }
-  
+
       // Delete partner
       const deletedPartner = await fastify.prisma.deliveryPartner.delete({
         where: { id: Number(id) }, // id is Int
@@ -166,7 +166,7 @@ async function DeliveryRoutes(fastify, routes) {
           email: true,
         },
       });
-  
+
       return reply.send({
         success: true,
         message: "Delivery partner deleted successfully",
@@ -174,7 +174,7 @@ async function DeliveryRoutes(fastify, routes) {
       });
     } catch (error) {
       fastify.log.error(error);
-  
+
       if (error.code === "P2025") {
         // Record not found
         return reply.status(404).send({
@@ -182,15 +182,15 @@ async function DeliveryRoutes(fastify, routes) {
           error: "Delivery partner not found",
         });
       }
-  
+
       return reply.status(500).send({
         success: false,
         error: "Failed to delete partner",
       });
     }
   });
-  
-  
+
+
 
   fastify.post("/login", async (request, reply) => {
     try {
@@ -257,13 +257,13 @@ async function DeliveryRoutes(fastify, routes) {
   fastify.put("/order/status", async (request, reply) => {
     try {
       const { orderId, status, deliveryPartnerId } = request.body;
-  
+
       if (!orderId || !status) {
         return reply
           .status(400)
           .send({ message: "Order Id and status are required" });
       }
-  
+
       // validate status against enum
       const validStatuses = [
         "PENDING",
@@ -277,7 +277,7 @@ async function DeliveryRoutes(fastify, routes) {
       if (!validStatuses.includes(status)) {
         return reply.status(400).send({ message: "Invalid order status" });
       }
-  
+
       const updatedOrder = await fastify.prisma.order.update({
         where: { id: orderId },
         data: {
@@ -289,7 +289,7 @@ async function DeliveryRoutes(fastify, routes) {
           deliveryPartner: true,
         },
       });
-  
+
       return reply.send({
         message: "Order updated successfully",
         order: updatedOrder,
@@ -300,47 +300,44 @@ async function DeliveryRoutes(fastify, routes) {
     }
   });
 
-  fastify.get("/orders", async (request, reply) => {
-    try {
-      const confirmedOrders = await fastify.prisma.order.findMany({
-        where: { status: "CONFIRMED" }, // filter by order status
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              email: true,
-            },
-          },
-          address: true,
-          items: {
-            include: {
-              product: true, // if you want product details inside items
-            },
-          },
-          deliveryPartner: {
-            select: { id: true, name: true, email: true },
-          },
-        },
-        orderBy: {
-          createdAt: "desc", // latest first
-        },
-      });
-  
-      return reply.send({
-        success: true,
-        message: "Confirmed orders fetched successfully",
-        data: confirmedOrders,
-      });
-    } catch (error) {
-      fastify.log.error(error);
-      return reply.status(500).send({
-        success: false,
-        message: "Failed to fetch confirmed orders",
-      });
-    }
-  });
+ fastify.get("/orders", async (request, reply) => {
+  try {
+    const deliveryPartnerId = request.query.deliveryPartnerId
+      ? Number(request.query.deliveryPartnerId)
+      : undefined
+
+    console.log(deliveryPartnerId) // should log 3, 'number'
+
+    const confirmedOrders = await fastify.prisma.order.findMany({
+      where: {
+        status: "CONFIRMED",
+        ...(deliveryPartnerId && { deliveryPartnerId }),
+      },
+      include: {
+        user: { select: { id: true, name: true, phone: true, email: true } },
+        address: true,
+        items: { include: { product: true } },
+        deliveryPartner: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+    console.log(confirmedOrders)
+
+    return reply.send({
+      success: true,
+      message: "Confirmed orders fetched successfully",
+      data: confirmedOrders,
+    })
+  } catch (error) {
+    fastify.log.error(error)
+    return reply.status(500).send({
+      success: false,
+      message: "Failed to fetch confirmed orders",
+    })
+  }
+})
+
+
 
   fastify.get("/delivery-partner/:partnerId/stats", async (request, reply) => {
     const { partnerId } = request.params
@@ -393,7 +390,63 @@ async function DeliveryRoutes(fastify, routes) {
       return reply.status(500).send({ message: "Failed to fetch stats" })
     }
   })
-  
+
+  fastify.put("/order/assign", async (request, reply) => {
+    try {
+      const { orderId, deliveryPartnerId } = request.body;
+
+      if (!orderId || !deliveryPartnerId) {
+        return reply.status(400).send({
+          success: false,
+          message: "Both orderId and deliveryPartnerId are required",
+        });
+      }
+
+      // Verify the delivery partner exists
+      const partner = await fastify.prisma.deliveryPartner.findUnique({
+        where: { id: Number(deliveryPartnerId) },
+      });
+
+      if (!partner) {
+        return reply.status(404).send({
+          success: false,
+          message: "Delivery partner not found",
+        });
+      }
+
+      // Update the order with delivery partner assignment
+      const updatedOrder = await fastify.prisma.order.update({
+        where: { id: orderId },
+        data: { deliveryPartnerId: Number(deliveryPartnerId) },
+        include: {
+          user: {
+            select: { id: true, name: true, phone: true, email: true },
+          },
+          deliveryPartner: {
+            select: { id: true, name: true, email: true },
+          },
+          items: {
+            include: { product: true },
+          },
+          address: true,
+        },
+      });
+
+      return reply.send({
+        success: true,
+        message: `Order assigned to delivery partner ${partner.name} successfully`,
+        data: updatedOrder,
+      });
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({
+        success: false,
+        message: "Failed to assign delivery partner",
+      });
+    }
+  });
+
+
 }
 
 module.exports = DeliveryRoutes;

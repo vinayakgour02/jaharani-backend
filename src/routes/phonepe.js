@@ -4,6 +4,12 @@ const clientId = 'SU2509302010389222215384';
 const clientSecret = 'a6563f6f-14e0-4bf4-88b6-5cfd44220f1f';
 const clientVersion = 1;
 const env = Env.PRODUCTION;
+
+
+// const clientId = 'TEST-M2300Z2GGOB1F_25090';
+// const clientSecret = 'MDhjZjYxNzAtMjM2OS00NDk0LWI0YmItZTNkNjRkYzZkYmE1';
+// const clientVersion = 1;
+// const env = Env.SANDBOX;
 const phonepeClient = StandardCheckoutClient.getInstance(
     clientId,
     clientSecret,
@@ -11,8 +17,6 @@ const phonepeClient = StandardCheckoutClient.getInstance(
     env
 );
 
-const BASE_URL = 'https://jaharani.anextinfotech.com';
-const DEVLOPEMENT_URL = 'http://192.168.29.166:5555';
 
 async function phonepeRoutes(fastify, options) {
     // ------------------------
