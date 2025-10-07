@@ -195,8 +195,8 @@ model Order {
   deliveryPartnerId Int?
   deliveryPartner   DeliveryPartner? @relation("DeliveryAssignments", fields: [deliveryPartnerId], references: [id])
 
-  status        OrderStatus    @default(PENDING)
-  paymentStatus PaymentStatus  @default(PENDING)
+  status        OrderStatus    @default(CANCELLED)
+  paymentStatus PaymentStatus  @default(FAILED)
   paymentMethod PaymentMethod?
 }
 

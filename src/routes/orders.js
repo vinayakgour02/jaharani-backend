@@ -618,7 +618,8 @@ async function orderRoutes(fastify, options) {
 
       // Get total orders
       const totalOrders = await fastify.prisma.order.count({
-        where: dateFilterClause
+       where: { ...dateFilterClause, paymentStatus: 'PAID' }
+
       });
 
       // Get orders by status
